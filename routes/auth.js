@@ -89,5 +89,5 @@ router.post("/register", authController.signup_post);
  *                          $ref: "#components/schemas/Auth"
  */
 
-router.post("/login", authController.login_post);
+router.post("/login", authController.login);
 module.exports = router;

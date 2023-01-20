@@ -1,7 +1,7 @@
 const router = require("express").Router();
 const bcrypt = require("bcrypt");
+const { protect, authorize } = require("../middlewares/auth");
 const User = require("../models/User");
-
 
 /**
  * @swagger
@@ -23,8 +23,7 @@ const User = require("../models/User");
  *
  */
 
-
-router.get("/", async (req, res) => {
+router.get("/", protect, authorize("admin"), async (req, res) => {
   const user = await User.find();
   res.status(200).json(user);
 });
@@ -89,8 +88,8 @@ router.get("/", async (req, res) => {
  *
  */
 //UPDATE
-router.put("/:id", async (req, res) => {
-  if (req.body.userId === req.params.id) {
+router.put("/:id", protect, async (req, res) => {
+  if (req.user._id === req.params.id) {
     if (req.body.password) {
       const salt = await bcrypt.genSalt(10);
       req.body.password = await bcrypt.hash(req.body.password, salt);
@@ -112,8 +111,6 @@ router.put("/:id", async (req, res) => {
   }
 });
 
-
-
 /**
  * @swagger
  *   /api/users/{id}:
@@ -134,7 +131,7 @@ router.put("/:id", async (req, res) => {
  *              application/json:
  *                  schema:
  *                    $ref: "#components/schemas/User"
- *                    
+ *
  *      responses:
  *          200:
  *            description: User has been deleted
@@ -152,11 +149,11 @@ router.put("/:id", async (req, res) => {
  *                      type: array
  *                      items:
  *                          $ref: "#components/schemas/User"
- *            
+ *
  */
 
 //delete
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", protect, authorize("admin"), async (req, res) => {
   if (req.body.userId === req.params.id) {
     // try {
     //   const user = await User.findById(req.params.id);
@@ -181,7 +178,6 @@ router.delete("/:id", async (req, res) => {
     res.status(401).json("you can delete only your account ");
   }
 });
-
 
 /**
  * @swagger
@@ -220,7 +216,7 @@ router.get("/:id", async (req, res) => {
     if (user.length < 1) {
       res.status(401).json({ msg: "User not found" });
     } else {
-      res.status(200).json(others);
+      res.status(200).json(others); 
       console.log(user);
     }
   } catch (err) {

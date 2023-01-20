@@ -1,8 +1,7 @@
 const router = require("express").Router();
 const User = require("../models/User");
 const Post = require("../models/Post");
-
-
+const { protect, authorize } = require("../middlewares/auth");
 
 /**
  * @swagger
@@ -24,13 +23,13 @@ const Post = require("../models/Post");
  *                application/json:
  *                  schema:
  *                      $ref: "#components/schemas/Post"
- * 
- *             
+ *
+ *
  *
  */
 
 //CREATE POST
-router.post("/", async (req, res) => {
+router.post("/", protect, authorize("admin"), async (req, res) => {
   const newPost = new Post(req.body);
   try {
     const savedPost = await newPost.save();
@@ -39,8 +38,6 @@ router.post("/", async (req, res) => {
     res.status(500).json(err);
   }
 });
-
-
 
 /**
  * @swagger
@@ -62,7 +59,7 @@ router.post("/", async (req, res) => {
  *              application/json:
  *                  schema:
  *                    $ref: "#components/schemas/Post"
- *                    
+ *
  *      responses:
  *          200:
  *            description: updated successfully
@@ -84,26 +81,17 @@ router.post("/", async (req, res) => {
  *
  */
 
- 
-
 //UPDATE POST
-router.put("/:id", async (req, res) => {
+router.put("/:id", protect, authorize("admin"), async (req, res) => {
+  console.log(req.user);
+
   try {
-    const post = await Post.findById(req.params.id);
-    if (post.username === req.body.username) {
-      try {
-        const updatedPost = await Post.findByIdAndUpdate(
-          req.params.id,
-          { $set: req.body },
-          { new: true }
-        );
-        res.status(200).json(updatedPost);
-      } catch (err) {
-        res.status(500).json(err);
-      }
-    } else {
-      res.status(401).json("you can update only your post!");
-    }
+    const updatedPost = await Post.findByIdAndUpdate(
+      req.params.id,
+      { $set: req.body },
+      { new: true }
+    );
+    res.status(200).json(updatedPost);
   } catch (err) {
     res.status(500).json(err);
   }
@@ -129,7 +117,7 @@ router.put("/:id", async (req, res) => {
  *              application/json:
  *                  schema:
  *                    $ref: "#components/schemas/Post"
- *                    
+ *
  *      responses:
  *          200:
  *            description: Post has been deleted
@@ -147,24 +135,20 @@ router.put("/:id", async (req, res) => {
  *                      type: array
  *                      items:
  *                          $ref: "#components/schemas/Post"
- *            
+ *
  */
 
 //DELETE POST
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", protect, authorize("admin"), async (req, res) => {
+  console.log(req);
   try {
     const post = await Post.findById(req.params.id);
-    console.log(`pst username: ${post.username}`);
-    console.log(`req username: ${req.body.username}`);
-    if (post.username == req.body.username) {
-      try {
-        await post.delete();
-        res.status(200).json("Post has been deleted");
-      } catch (err) {
-        res.status(500).json(err);
-      }
-    } else {
-      res.status(401).json("you can delete only your post!");
+
+    try {
+      await post.delete();
+      res.status(200).json("Post has been deleted");
+    } catch (err) {
+      res.status(500).json(err);
     }
   } catch (err) {
     res.status(500).json(err);
@@ -172,15 +156,15 @@ router.delete("/:id", async (req, res) => {
 });
 
 // like a post
-router.put("/:id/like", async (req, res) => {
+router.put("/:id/like", protect, async (req, res) => {
+  console.log(req.user.username);
   const post = await Post.findById(req.params.id);
   const likedPost = await post.updateOne({
-    $push: { likes: req.body.username },
+    $push: { likes: req.user.username },
   });
   res.status(200).json({ msg: `post with id ${req.params.id} is liked` });
 });
-//comments on post
-router.put("/:id/comment", async (req, res) => {});
+ 
 
 /**
  * @swagger
@@ -234,8 +218,7 @@ router.get("/:id", async (req, res) => {
  *                          type: string
  *                  desc:
  *                          type: string
- *                  categories:
- *                          type: array
+ *                  
  *                  comments:
  *                          type: array
  *                  likes:
@@ -283,6 +266,17 @@ router.get("/", async (req, res) => {
   } catch (err) {
     res.status(500).json(err);
   }
+});
+
+router.put("/comment/:postId/", protect, async (req, res, next) => {
+  const { commentText } = req.body;
+  console.log("hiiiii");
+  const comment = { username: req.user.username, comment: commentText };
+  const post = await Post.findById(req.params.postId);
+  const newPost = await post.updateOne({
+    $push: { comments: comment },
+  });
+  res.status(200).json({ msg: `comment sent!!!` });
 });
 
 module.exports = router;

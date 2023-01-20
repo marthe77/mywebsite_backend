@@ -1,6 +1,8 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const User = require("../models/User");
+const ErrorResponse = require("../utils/errorResponse");
+const asyncHandler = require("../middlewares/async");
 //handle errors
 const handleErrors = (err) => {
   console.log(err);
@@ -42,47 +44,52 @@ module.exports.signup_post = async (req, res) => {
   }
 };
 
-module.exports.login_post = (req, res) => {
-  User.findOne({ email: req.body.email })
-    .then((user) => {
-      bcrypt
-        .compare(req.body.password, user.password)
+exports.login = asyncHandler(async (req, res, next) => {
+  const { email, password } = req.body;
 
-        .then((passwordCheck) => {
-          // check if password match
-          if (!passwordCheck) {
-            return res.status(400).send({
-              message: "password don't match",
-              error,
-            });
-          }
+  // Validate email & password
+  if (!email || !password) {
+    return next(new ErrorResponse("Please provide an email and password", 400));
+  }
 
-          // create token
-          const token = jwt.sign(
-            {
-              userId: user._id,
-              userEmail: user.email,
-            },
-            "RANDOM-TOKEN",
-            { expiresIn: "24h" }
-          );
-          // return response
-          res.status(200).send({
-            message: "Login successfully!!",
-            token,
-          });
-        })
-        .catch((error) => {
-          res.status(400).send({
-            message: "Password not match!",
-            error,
-          });
-        });
-    })
-    .catch((error) => {
-      res.status(404).send({
-        message: "User not found",
-        error,
-      });
-    });
+  // Check for user
+  const user = await User.findOne({ email }).select("+password");
+
+  if (!user) {
+    return next(new ErrorResponse("Invalid credentials", 401));
+  }
+
+  // Check if password matches
+  const isMatch = await user.matchPassword(password);
+
+  if (!isMatch) {
+    return next(new ErrorResponse("Invalid credentials", 401));
+  }
+
+  sendTokenResponse(user, 200, res);
+});
+
+const sendTokenResponse = (user, statusCode, res) => {
+  // create token
+  const token = user.getSignedToken();
+  const userRole = user.role;
+  const username = user.username;
+  const email = user.email;
+
+  const options = {
+    expires: new Date(
+      Date.now() + process.env.JWT_COOKIE_EXPIRE * 24 * 60 * 60 * 1000
+    ),
+    httpOnly: true,
+  };
+  if (process.env.NODE_ENV == "production") {
+    options.secure = true;
+  }
+  res.status(statusCode).cookie("token", token, options).json({
+    success: true,
+    token,
+    username,
+    email,
+    userRole,
+  });
 };
