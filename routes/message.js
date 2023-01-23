@@ -28,6 +28,33 @@ const router = require("express").Router();
  */
 
 
+//post message
+
+
+/**
+ * @swagger
+ *   /api/messages:
+ *    post:
+ *      tags: [message]
+ *      summary:  used to send messages
+ *      description: used to send messages
+ *      requestBody:
+ *          required: true
+ *          content:
+ *              application/json:
+ *                  schema:
+ *                      $ref: "#components/schemas/Message"
+ *      responses:
+ *          200:
+ *            description: the post was succcessful send to admin
+ *            content:
+ *                application/json:
+ *                  schema:
+ *                      $ref: "#components/schemas/Message"
+ *
+ *
+ *
+ */
 
 
 router

@@ -28,7 +28,7 @@ exports.deleteMessage = async (req, res) => {
 
     try {
       await message.delete();
-      res.status(200).json("messae has been deleted");
+      res.status(200).json("message has been deleted");
     } catch (err) {
       res.status(500).json(err);
     }

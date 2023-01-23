@@ -1,5 +1,4 @@
 const router = require("express").Router();
-const User = require("../models/User");
 const Post = require("../models/Post");
 const { protect, authorize } = require("../middlewares/auth");
 
@@ -7,15 +6,22 @@ const { protect, authorize } = require("../middlewares/auth");
  * @swagger
  *   /api/posts:
  *    post:
+ *
  *      tags: [Post]
  *      summary:  used to insert data to database
  *      description: used to insert post in database
+ *      security: [{
+            - bearerAuth: [] 
+ *      }]
+ *
+ *
  *      requestBody:
  *          required: true
  *          content:
  *              application/json:
  *                  schema:
  *                      $ref: "#components/schemas/Post"
+ *
  *      responses:
  *          200:
  *            description: the post was succcessful created
@@ -164,7 +170,6 @@ router.put("/:id/like", protect, async (req, res) => {
   });
   res.status(200).json({ msg: `post with id ${req.params.id} is liked` });
 });
- 
 
 /**
  * @swagger
@@ -218,11 +223,18 @@ router.get("/:id", async (req, res) => {
  *                          type: string
  *                  desc:
  *                          type: string
- *                  
+ *
  *                  comments:
  *                          type: array
  *                  likes:
  *                       type: array
+ * 
+ *      securitySchemes:
+            bearerAuth:            # arbitrary name for the security scheme
+                type: http
+                scheme: bearer
+                bearerFormat: JWT
+                
  */
 
 /**
