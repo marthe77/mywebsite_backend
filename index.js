@@ -24,7 +24,7 @@ const options = {
       title: "My website Api project",
       version: "1.0.0",
     },
-     
+
     servers: [
       {
         url: "http://localhost:5000/",
@@ -33,10 +33,18 @@ const options = {
         url: "https://calm-erin-lobster-coat.cyclic.app/",
       },
     ],
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: "http",
+          scheme: "bearer",
+          bearerFormat: "JWT",
+        },
+      },
+    },
   },
   apis: ["./routes/*.js"],
 };
-
 
 const swaggerSpec = swaggerJSDoc(options);
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));

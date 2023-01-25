@@ -10,9 +10,9 @@ const { protect, authorize } = require("../middlewares/auth");
  *      tags: [Post]
  *      summary:  used to insert data to database
  *      description: used to insert post in database
- *      security: [{
-            - bearerAuth: [] 
- *      }]
+ *      security:
+ *        - bearerAuth: []
+ *
  *
  *
  *      requestBody:
@@ -52,6 +52,7 @@ router.post("/", protect, authorize("admin"), async (req, res) => {
  *      tags: [Post]
  *      summary: this api help us to update the post
  *      description: used to update post
+ *
  *      parameters:
  *        - in: path
  *          name: id
@@ -59,6 +60,8 @@ router.post("/", protect, authorize("admin"), async (req, res) => {
  *          description: Numeric ID required
  *          schema:
  *            type: string
+ *      security:
+ *        - bearerAuth: []
  *      requestBody:
  *          required: true
  *          content:
@@ -110,6 +113,7 @@ router.put("/:id", protect, authorize("admin"), async (req, res) => {
  *      tags: [Post]
  *      summary:  this api is used to delete recorded post from mongoDb
  *      description:  used to delete post
+ *
  *      parameters:
  *        - in: path
  *          name: id
@@ -117,6 +121,8 @@ router.put("/:id", protect, authorize("admin"), async (req, res) => {
  *          description: Numeric ID required
  *          schema:
  *            type: string
+ *      security:
+ *        - bearerAuth: []
  *      requestBody:
  *          required: true
  *          content:
@@ -228,13 +234,8 @@ router.get("/:id", async (req, res) => {
  *                          type: array
  *                  likes:
  *                       type: array
- * 
- *      securitySchemes:
-            bearerAuth:            # arbitrary name for the security scheme
-                type: http
-                scheme: bearer
-                bearerFormat: JWT
-                
+ *
+ *
  */
 
 /**
